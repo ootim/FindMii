@@ -9,14 +9,18 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.text.TextUtils;
 import android.util.Log;
+
+import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
 
 /**
  * Created by Timileyin on 09/10/2015.
@@ -72,41 +76,52 @@ public class GetLocation extends Service implements LocationListener {
             return false;
         }
         return true;
+
+
     }
 
     public Location getGPSCoordinates() {
         try {
                 // First get location from Network Provider
                 if (isNetworkEnabled) {
-                    locationManager.requestLocationUpdates(
-                            LocationManager.NETWORK_PROVIDER,
-                            MIN_TIME_BW_UPDATES,
-                            MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+                    try {
+                        locationManager.requestLocationUpdates(
+                                LocationManager.NETWORK_PROVIDER,
+                                MIN_TIME_BW_UPDATES,
+                                MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+
                     Log.d("Network", "Network");
                     if (locationManager != null) {
-                        location = locationManager
-                                .getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                            location = locationManager
+                                    .getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                        }
                         if (location != null) {
                             latitude = location.getLatitude();
                             longitude = location.getLongitude();
                         }
+                    }catch(SecurityException se){
+                        se.printStackTrace();
                     }
                 }
                 // if GPS Enabled get lat/long using GPS Services
                 if (isGPSEnabled) {
                     if (location == null) {
-                        locationManager.requestLocationUpdates(
-                                LocationManager.GPS_PROVIDER,
-                                MIN_TIME_BW_UPDATES,
-                                MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
-                        Log.d("GPS Enabled", "GPS Enabled");
-                        if (locationManager != null) {
-                            location = locationManager
-                                    .getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                            if (location != null) {
-                                latitude = location.getLatitude();
-                                longitude = location.getLongitude();
+                        try {
+                            locationManager.requestLocationUpdates(
+                                    LocationManager.GPS_PROVIDER,
+                                    MIN_TIME_BW_UPDATES,
+                                    MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+                            Log.d("GPS Enabled", "GPS Enabled");
+                            if (locationManager != null) {
+                                location = locationManager
+                                        .getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                                if (location != null) {
+                                    latitude = location.getLatitude();
+                                    longitude = location.getLongitude();
+                                }
                             }
+                        }catch (SecurityException se){
+                            se.printStackTrace();
                         }
                     }
                 }
@@ -132,22 +147,41 @@ public class GetLocation extends Service implements LocationListener {
         StringBuilder result = new StringBuilder();
         try {
             Geocoder geocoder = new Geocoder(aContext, Locale.getDefault());
-            List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
+            List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 15);
             if (addresses.size() > 0) {
-                Address address = addresses.get(0);
-                result.append(address.getAddressLine(0));
-                result.append(", ");
-                result.append(address.getAddressLine(1));
-                /*for(int i=0;i<address.getMaxAddressLineIndex();i++) {
-                    result.append(address.getAddressLine(i));
-                    result.append("\n");
-                }*/
+                result.append(addresses.size());
+                result.append("\n");
+                for(int j=0;j<addresses.size();j++){
+                    Address address = addresses.get(j);
+                    //result.append(address.getAddressLine(j));
+                    //result.append(", ");
+                    //result.append(address.getAddressLine(j));
+                    for(int i=0;i<address.getMaxAddressLineIndex();i++) {
+                        result.append(address.getAddressLine(i));
+                        result.append(address.getLatitude());
+                        //result.append("\n");
+                    }
+                    result.append("\n------------------");
+               }
             }
         } catch (IOException e) {
             Log.e("Geocoder", e.getMessage());
         }
 
         return result.toString();
+    }
+    public List<Address> getAddressList()
+    {
+        //address = "66c, east slope, refectory road, famler, brighton";
+        Geocoder geocoder = new Geocoder(aContext,Locale.getDefault());
+        try {
+             List<Address> add = geocoder.getFromLocation(getLatitude(),getLongitude(),5);
+            return add;
+
+        } catch (IOException e) {
+            Log.i("FROM_LOCATION_NAME","err");
+        }
+        return null;
     }
 
 

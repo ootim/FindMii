@@ -4,15 +4,14 @@
 
     To get one, follow this link, follow the directions and press "Create" at the end:
 
-https://console.developers.google.com/flows/enableapi?apiid=maps_android_backend&keyType=CLIENT_SIDE_ANDROID&r=84:0C:0A:6D:CC:6F:A8:A8:CC:45:0A:72:1C:78:FD:57:38:E2:45:D1%3Bcom.example.g3.findmii
-
+https://console.developers.google.com/flows/enableapi?apiid=maps_android_backend&keyType=CLIENT_SIDE_ANDROID&r=D5:E1:01:12:D9:88:33:E7:E1:C1:0C:F9:2F:C3:2F:4F:A2:7F:F3:44;com.example.g3.findmii
     You can also add your credentials to an existing key, using this line:
-    84:0C:0A:6D:CC:6F:A8:A8:CC:45:0A:72:1C:78:FD:57:38:E2:45:D1;com.example.g3.findmii
+    D5:E1:01:12:D9:88:33:E7:E1:C1:0C:F9:2F:C3:2F:4F:A2:7F:F3:44;com.example.g3.findmii
 
     Once you have your key (it starts with "AIza"), replace the "google_maps_key"
     string in this file.
     -->
     <string name="google_maps_key" translatable="false" templateMergeStrategy="preserve">
-        AIzaSyB0IOho2RlPd9XRNkHHky90GE6ifchW1GM
+        AIzaSyC6rLDMlk-6w6XYiTs-qKV2BaZHMisiVos
     </string>
 </resources>

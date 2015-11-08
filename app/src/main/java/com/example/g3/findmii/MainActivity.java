@@ -1,6 +1,10 @@
 package com.example.g3.findmii;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.Address;
+import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,6 +13,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import java.util.*;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,8 +25,16 @@ public class MainActivity extends AppCompatActivity {
 
         Button btnLocation = (Button)findViewById(R.id.btn_show_map);
         final TextView txtLoc = (TextView) findViewById(R.id.txt_view);
+       // btnLocation.setVisibility(View.INVISIBLE);
+        GetLocation loc = new GetLocation(MainActivity.this);
+        /*double latitude = loc.getLatitude();
+        double longitude = loc.getLongitude();
+        String address = loc.getAddressFromLatAndLong(latitude,longitude);
+        txtLoc.setText(address);*/
 
+        List<Address>  addresses = loc.getAddressList();
 
+        //txtLoc.setText(addresses.toString());//addresses
 
         btnLocation.setOnClickListener(new Button.OnClickListener() {
 
@@ -30,8 +43,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                if(loc.isNetworkEnabled()==false){
+                if(!loc.isNetworkEnabled()){
                     txtLoc.setText("Please enable location detection on your device, then continue");
+                    showSettingsAlert("NETWORK");
                 }else {
                     //txtLoc.setText(loc.getAddressFromLatAndLong(loc.getLatitude(),loc.getLongitude()));
                    try {
@@ -47,6 +61,33 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+    public void showSettingsAlert(String provider) {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(
+                MainActivity.this);
+
+        alertDialog.setTitle(provider + " SETTINGS");
+
+        alertDialog
+                .setMessage(provider + " is not enabled! Want to go to settings menu?");
+
+        alertDialog.setPositiveButton("Settings",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(
+                                Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                        MainActivity.this.startActivity(intent);
+                    }
+                });
+
+        alertDialog.setNegativeButton("Cancel",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+        alertDialog.show();
     }
 
     @Override
