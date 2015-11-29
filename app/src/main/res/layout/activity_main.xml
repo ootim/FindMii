@@ -11,12 +11,21 @@
         android:layout_height="wrap_content"
         android:id="@+id/btn_show_map"
         android:text="@string/txt_btn_show_map"
-        android:layout_centerVertical="true"
+        android:layout_below="@+id/txt_view"
         android:layout_centerHorizontal="true" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/txt_view"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/favs"
+        android:layout_below="@+id/btn_show_map"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="60dp" />
 
 </RelativeLayout>

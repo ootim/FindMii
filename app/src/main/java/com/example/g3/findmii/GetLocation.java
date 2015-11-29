@@ -3,23 +3,21 @@ package com.example.g3.findmii;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.IBinder;
-import android.text.TextUtils;
 import android.util.Log;
 
-import com.google.android.gms.maps.model.LatLng;
-
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
 
 
 /**
@@ -49,13 +47,12 @@ public class GetLocation extends Service implements LocationListener {
     // Declaring a Location Manager
     protected LocationManager locationManager;
 
-    public GetLocation(Context context){
+    public GetLocation(Context context) {
         this.aContext = context;
         this.getNetworkStatus();
     }
 
-    private void getNetworkStatus()
-    {
+    private void getNetworkStatus() {
         try {
             locationManager = (LocationManager) aContext.getSystemService(LOCATION_SERVICE);
 
@@ -66,11 +63,12 @@ public class GetLocation extends Service implements LocationListener {
             // getting network status
             isNetworkEnabled = locationManager
                     .isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-        }catch (Exception e) {
+        } catch (Exception e) {
             Log.e("NetworkStatus", e.getMessage());
         }
     }
-    public boolean isNetworkEnabled(){
+
+    public boolean isNetworkEnabled() {
         this.getNetworkStatus();
         if (!isGPSEnabled && !isNetworkEnabled) {
             return false;
@@ -82,49 +80,49 @@ public class GetLocation extends Service implements LocationListener {
 
     public Location getGPSCoordinates() {
         try {
-                // First get location from Network Provider
-                if (isNetworkEnabled) {
-                    try {
-                        locationManager.requestLocationUpdates(
-                                LocationManager.NETWORK_PROVIDER,
-                                MIN_TIME_BW_UPDATES,
-                                MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+            // First get location from Network Provider
+            if (isNetworkEnabled) {
+                try {
+                    locationManager.requestLocationUpdates(
+                            LocationManager.NETWORK_PROVIDER,
+                            MIN_TIME_BW_UPDATES,
+                            MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
 
                     Log.d("Network", "Network");
                     if (locationManager != null) {
+                        location = locationManager
+                                .getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    }
+                    if (location != null) {
+                        latitude = location.getLatitude();
+                        longitude = location.getLongitude();
+                    }
+                } catch (SecurityException se) {
+                    se.printStackTrace();
+                }
+            }
+            // if GPS Enabled get lat/long using GPS Services
+            if (isGPSEnabled) {
+                if (location == null) {
+                    try {
+                        locationManager.requestLocationUpdates(
+                                LocationManager.GPS_PROVIDER,
+                                MIN_TIME_BW_UPDATES,
+                                MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+                        Log.d("GPS Enabled", "GPS Enabled");
+                        if (locationManager != null) {
                             location = locationManager
-                                    .getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                                    .getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                            if (location != null) {
+                                latitude = location.getLatitude();
+                                longitude = location.getLongitude();
+                            }
                         }
-                        if (location != null) {
-                            latitude = location.getLatitude();
-                            longitude = location.getLongitude();
-                        }
-                    }catch(SecurityException se){
+                    } catch (SecurityException se) {
                         se.printStackTrace();
                     }
                 }
-                // if GPS Enabled get lat/long using GPS Services
-                if (isGPSEnabled) {
-                    if (location == null) {
-                        try {
-                            locationManager.requestLocationUpdates(
-                                    LocationManager.GPS_PROVIDER,
-                                    MIN_TIME_BW_UPDATES,
-                                    MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
-                            Log.d("GPS Enabled", "GPS Enabled");
-                            if (locationManager != null) {
-                                location = locationManager
-                                        .getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                                if (location != null) {
-                                    latitude = location.getLatitude();
-                                    longitude = location.getLongitude();
-                                }
-                            }
-                        }catch (SecurityException se){
-                            se.printStackTrace();
-                        }
-                    }
-                }
+            }
 
         } catch (Exception e) {
             Log.e("LocationManager", e.getMessage());
@@ -133,12 +131,12 @@ public class GetLocation extends Service implements LocationListener {
     }
 
     //return latitude
-    public double getLatitude(){
+    public double getLatitude() {
         return this.getGPSCoordinates().getLatitude();
     }
 
     //return longitude
-    public double getLongitude(){
+    public double getLongitude() {
         return this.getGPSCoordinates().getLongitude();
     }
 
@@ -151,18 +149,18 @@ public class GetLocation extends Service implements LocationListener {
             if (addresses.size() > 0) {
                 result.append(addresses.size());
                 result.append("\n");
-                for(int j=0;j<addresses.size();j++){
+                for (int j = 0; j < addresses.size(); j++) {
                     Address address = addresses.get(j);
                     //result.append(address.getAddressLine(j));
                     //result.append(", ");
                     //result.append(address.getAddressLine(j));
-                    for(int i=0;i<address.getMaxAddressLineIndex();i++) {
+                    for (int i = 0; i < address.getMaxAddressLineIndex(); i++) {
                         result.append(address.getAddressLine(i));
                         result.append(address.getLatitude());
                         //result.append("\n");
                     }
                     result.append("\n------------------");
-               }
+                }
             }
         } catch (IOException e) {
             Log.e("Geocoder", e.getMessage());
@@ -170,16 +168,16 @@ public class GetLocation extends Service implements LocationListener {
 
         return result.toString();
     }
-    public List<Address> getAddressList()
-    {
+
+    public List<Address> getAddressList() {
         //address = "66c, east slope, refectory road, famler, brighton";
-        Geocoder geocoder = new Geocoder(aContext,Locale.getDefault());
+        Geocoder geocoder = new Geocoder(aContext, Locale.getDefault());
         try {
-             List<Address> add = geocoder.getFromLocation(getLatitude(),getLongitude(),5);
+            List<Address> add = geocoder.getFromLocation(getLatitude(), getLongitude(), 5);
             return add;
 
         } catch (IOException e) {
-            Log.i("FROM_LOCATION_NAME","err");
+            Log.i("FROM_LOCATION_NAME", "err");
         }
         return null;
     }
@@ -209,3 +207,37 @@ public class GetLocation extends Service implements LocationListener {
     }
 
 }
+
+     class FavouriteReaderDbHelper extends SQLiteOpenHelper {
+        public static final int DATABASE_VERSION = 1;
+        public static final String DATABASE_NAME = "bkmark.db";
+
+
+            final String TEXT_TYPE = " TEXT";
+            final String COMMA_SEP = ",";
+            final String SQL_CREATE_ENTRIES =
+                    "CREATE TABLE " + FavouriteDBSchema.FavouriteSchema.TABLE_NAME + " (" +
+                            FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_LATITUDE+ TEXT_TYPE + COMMA_SEP +
+                            FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_LONGITUDE+ TEXT_TYPE + COMMA_SEP +
+                            FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_POSTCODE + TEXT_TYPE + " PRIMARY KEY" + COMMA_SEP +
+                            FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_ADDRESS + TEXT_TYPE + COMMA_SEP +
+                            FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_AVG_PRICE + TEXT_TYPE + COMMA_SEP +
+                            FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_CREATED_AT + TEXT_TYPE +
+                            " )";
+
+        public FavouriteReaderDbHelper(Context context) {
+            super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        }
+        public void onCreate(SQLiteDatabase db) {
+            db.execSQL(SQL_CREATE_ENTRIES);
+        }
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            // This database is only a cache for online data, so its upgrade policy is
+            // to simply to discard the data and start over
+            //db.execSQL(SQL_DELETE_ENTRIES);
+           // onCreate(db);
+        }
+        public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            onUpgrade(db, oldVersion, newVersion);
+        }
+    }
