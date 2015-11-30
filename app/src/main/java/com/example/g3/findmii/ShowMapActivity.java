@@ -364,8 +364,8 @@ public class ShowMapActivity extends FragmentActivity {
     }
     //return the address from latitude and longitude
     public String getAddressFromLatAndLong(double latitude, double longitude,String type) {
-        String postCode=null, address=null;
-        try {
+        String postCode=null;
+        /*try {
             Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
             List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 3);
             if (addresses.size() > 0) {
@@ -374,11 +374,25 @@ public class ShowMapActivity extends FragmentActivity {
             }
         } catch (IOException e) {
             Log.e("Geocoder", e.getMessage());
+        }*/
+        StringBuilder address = new StringBuilder();
+        try {
+            Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+            List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
+            if (addresses.size() > 0) {
+                for (int i = 0; i<addresses.size(); i++) {
+                    Address addr = addresses.get(i);
+                    address.append(addr.getAddressLine(i));
+                    address.append(", ");
+                }
+            }
+        } catch (IOException e) {
+            Log.e("Geocoder", e.getMessage());
         }
 
         if(type=="postcode"){
             return postCode;
         }
-        return address;
+        return address.toString();
     }
 }
