@@ -1,10 +1,13 @@
 package com.example.g3.findmii;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Address;
+import android.os.AsyncTask;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,10 +16,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import java.util.*;
+import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+    ArrayList<ArrayList<String>> favList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,8 +32,11 @@ public class MainActivity extends AppCompatActivity {
 
         Button btnLocation = (Button)findViewById(R.id.btn_show_map);
         final TextView txtLoc = (TextView) findViewById(R.id.txt_view);
+        Button btnFavs = (Button)findViewById(R.id.btn_show_favs);
+
        // btnLocation.setVisibility(View.INVISIBLE);
         GetLocation loc = new GetLocation(MainActivity.this);
+
         /*double latitude = loc.getLatitude();
         double longitude = loc.getLongitude();
         String address = loc.getAddressFromLatAndLong(latitude,longitude);
@@ -59,6 +69,32 @@ public class MainActivity extends AppCompatActivity {
                         Log.e("ShowMapIntent", e.toString());
                     }
                 }
+            }
+        });
+        btnFavs.setOnClickListener(new Button.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                ShowMapActivity favs = new ShowMapActivity();
+                favList = new ArrayList<>();
+                boolean f = favs.isFavourite(MainActivity.this, null);
+                if(!favs.isFavourite(MainActivity.this, null)){
+                    Toast.makeText(getApplicationContext(),"No Favourites",Toast.LENGTH_LONG);
+                }else{
+                    favList = favs.getFavourites(MainActivity.this);
+
+                    Intent i = new Intent(MainActivity.this, FavouriteList.class);
+                    ArrayList<String> values = new ArrayList<>();
+                    for(ArrayList<String> current : favList){
+                        String tmp = current.get(3) + "\n" + current.get(2) + "\n" + current.get(0)
+                                + ", " + current.get(1) + "\n" + current.get(4);
+                        values.add(tmp);
+                    }
+                    String[] favValues = values.toArray(new String[values.size()]);
+                    i.putExtra("favouritelist",favValues);
+                    MainActivity.this.startActivity(i);
+                }
+
             }
         });
     }
@@ -116,4 +152,18 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    public void displayFavouriteList(ArrayList<ArrayList<String>> favList){
+        Intent i = new Intent(MainActivity.this, FavouriteList.class);
+        ArrayList<String> values = new ArrayList<>();
+        for(ArrayList<String> current : favList){
+            String tmp = current.get(4) + "\n" + current.get(3) + "\n " + current.get(1)
+                    + ", " + current.get(2) + "\n Average Price: " + current.get(5);
+            values.add(tmp);
+        }
+        String[] favValues = values.toArray(new String[values.size()]);
+        i.putExtra("favouritelist",favValues);
+        MainActivity.this.startActivity(i);
+    }
 }
+

@@ -2,18 +2,17 @@ package com.example.g3.findmii;
 
 import android.app.AlertDialog;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.location.Address;
 import android.location.Geocoder;
-import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -48,7 +47,7 @@ public class ShowMapActivity extends FragmentActivity {
     private ArrayList<Double> weights = new ArrayList<>();
     final static Float MAX_ZOOM = 16.0f;
     ArrayList<Marker> hMapMarkers = new ArrayList<>();
-    List<ArrayList> favs;
+    ArrayList<ArrayList<String>> favs;
 
 
     @Override
@@ -194,13 +193,13 @@ public class ShowMapActivity extends FragmentActivity {
         alertDialog.setPositiveButton("Yes",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        String postcode = getAddressFromLatAndLong(marker.getPosition().latitude,marker.getPosition().longitude,"postcode");
-                        String address = getAddressFromLatAndLong(marker.getPosition().latitude,marker.getPosition().longitude,"address");
+                        String postcode = getAddressFromLatAndLong(marker.getPosition().latitude, marker.getPosition().longitude, "postcode");
+                        String address = getAddressFromLatAndLong(marker.getPosition().latitude, marker.getPosition().longitude, "address");
                         // save to favourites
-                        if (isFavourite(postcode)) {
+                        if (isFavourite(ShowMapActivity.this, postcode)) {
                             Toast.makeText(ShowMapActivity.this, "Already a Favourite!", Toast.LENGTH_LONG).show();
                         } else {
-                            if (addToFavourites(marker.getPosition().latitude, marker.getPosition().longitude, postcode,address,
+                            if (addToFavourites(marker.getPosition().latitude, marker.getPosition().longitude, postcode, address,
                                     marker.getTitle(), "createdat")) {
                                 Toast.makeText(ShowMapActivity.this, "Added to favourites", Toast.LENGTH_LONG).show();
                             } else {
@@ -215,7 +214,7 @@ public class ShowMapActivity extends FragmentActivity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
-                        getFavourites();
+                        //setFavourites();
                     }
                 });
         alertDialog.show();
@@ -280,8 +279,8 @@ public class ShowMapActivity extends FragmentActivity {
         }
     }
 
-    void getFavourites(){
-        FavouriteReaderDbHelper mDbHelper = new FavouriteReaderDbHelper(getApplicationContext());
+    void setFavourites(Context c){
+        FavouriteReaderDbHelper mDbHelper = new FavouriteReaderDbHelper(c);
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
         String query = "SELECT * FROM " + FavouriteDBSchema.FavouriteSchema.TABLE_NAME;
@@ -290,12 +289,12 @@ public class ShowMapActivity extends FragmentActivity {
 
         if (results.moveToFirst()) {
             while (results.isAfterLast() == false) {
-                ArrayList fav = new ArrayList<>();
-                fav.add(results.getColumnIndexOrThrow(FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_LATITUDE));
-                fav.add(results.getColumnIndexOrThrow(FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_LONGITUDE));
-                fav.add(results.getColumnIndexOrThrow(FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_POSTCODE));
-                fav.add(results.getColumnIndexOrThrow(FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_ADDRESS));
-                fav.add(results.getColumnIndexOrThrow(FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_CREATED_AT));
+                ArrayList<String> fav = new ArrayList<>();
+                fav.add(results.getString(results.getColumnIndexOrThrow(FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_LATITUDE)));
+                fav.add(results.getString(results.getColumnIndexOrThrow(FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_LONGITUDE)));
+                fav.add(results.getString(results.getColumnIndexOrThrow(FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_POSTCODE)));
+                fav.add(results.getString(results.getColumnIndexOrThrow(FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_ADDRESS)));
+                fav.add(results.getString(results.getColumnIndexOrThrow(FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_AVG_PRICE)));
                 favs.add(fav);
                 results.moveToNext();
             }
@@ -328,23 +327,40 @@ public class ShowMapActivity extends FragmentActivity {
             //results.moveToFirst();
             //double latitude = results.getDouble(results.getColumnIndexOrThrow(FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_LATITUDE));
             //String address = results.getString(results.getColumnIndexOrThrow(FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_AVG_PRICE));
-        Toast.makeText(this,String.valueOf(favs.get(1).size()),Toast.LENGTH_LONG).show();
+       // Toast.makeText(this,String.valueOf(favs.get(1).size()),Toast.LENGTH_LONG).show();
             results.close();
         }
 
-    boolean isFavourite(String postcode){
-        FavouriteReaderDbHelper mDbHelper = new FavouriteReaderDbHelper(getApplicationContext());
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-        String query = "SELECT * FROM " + FavouriteDBSchema.FavouriteSchema.TABLE_NAME + " WHERE " +
-                FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_POSTCODE + " = '" + postcode + "'";
-        Cursor results = db.rawQuery(query, null);
+    boolean isFavourite(Context c, String postcode){
+        try {
+            FavouriteReaderDbHelper mDbHelper = new FavouriteReaderDbHelper(c);
+            SQLiteDatabase db = mDbHelper.getReadableDatabase();
+            String query;
+            if (postcode != null) {
+                query = "SELECT * FROM " + FavouriteDBSchema.FavouriteSchema.TABLE_NAME + " WHERE " +
+                        FavouriteDBSchema.FavouriteSchema.COLUMN_NAME_POSTCODE + " = '" + postcode + "'";
+            } else {
+                query = "SELECT * FROM " + FavouriteDBSchema.FavouriteSchema.TABLE_NAME;
+            }
+            Cursor results = db.rawQuery(query, null);
 
-        if(results.getCount()<=0){
+            if (results.getCount() <= 0) {
+                results.close();
+                return false;
+            }
             results.close();
+            return true;
+        }catch(SQLiteException e){
             return false;
         }
-        results.close();
-        return true;
+
+    }
+    int getNumberOfFavourites(){
+        return favs.size();
+    }
+    ArrayList<ArrayList<String>> getFavourites(Context c){
+        setFavourites(c);
+        return favs;
     }
     //return the address from latitude and longitude
     public String getAddressFromLatAndLong(double latitude, double longitude,String type) {
